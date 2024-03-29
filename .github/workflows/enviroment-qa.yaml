@@ -1,0 +1,42 @@
+name: Deploy QA
+
+env:
+  digitalocean_api_token: ${{ secrets.DIGITALOCEAN_API_TOKEN }}
+  qa_private_key: ${{ secrets.QA_PRIVATE_KEY }}
+
+on:
+  push:
+    branches: [qa]
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validation
+        run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false
+
+  deploy-terraform:
+    name: Terraform Apply
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Terraform init
+      run: terraform init -input=false
+
+    - name: Terraform validation
+      run: terraform validate
+
+    - name: Terraform apply
+      run: terraform apply -auto-approve -input=false
+        -var "digitalocean_api_token=${{ secrets.DIGITALOCEAN_API_TOKEN }}"
+        -var "qa_private_key=${{ secrets.QA_PRIVATE_KEY }}"

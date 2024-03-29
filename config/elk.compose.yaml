@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    image: elasticsearch:8.12.2
+    restart: always
+    env_file: ${ENV_FILE_NAME}
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.audit.enabled=true
+      - ELASTIC_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    ports:
+      - ${ELASTICSEARCH_PORT}:${ELASTICSEARCH_PORT}
+    volumes:
+      - elasticsearch-data:/var/lib/elasticsearch/data
+    networks:
+      - private
+
+  kibana:
+    container_name: kibana
+    image: kibana:8.12.2
+    restart: always
+    env_file: ${ENV_FILE_NAME}
+    environment:
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_URL}
+      - XPACK_FLEET_AGENTS_ELASTICSEARCH_HOSTS=${ELASTICSEARCH_URL}
+      - xpack.security.enabled=true
+      - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME}
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    ports:
+      - ${KIBANA_PORT}:${KIBANA_PORT}
+    volumes:
+      - kibana-data:/var/lib/kibana/data
+    depends_on:
+      - elasticsearch
+    networks:
+      - private
+
+networks:
+  private:
+    name: 'private'
+    driver: bridge
+
+volumes:
+  elasticsearch-data:
+    driver: local
+  kibana-data:
+    driver: local
